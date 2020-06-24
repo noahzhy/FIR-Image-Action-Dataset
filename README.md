@@ -1,8 +1,8 @@
 # FIR Image Action Dataset
 
-> Haoyu Zhang
-> noahzhang@hanyang.ac.kr
-> Visiongo Co., Ltd. 
+> Haoyu Zhang  
+> noahzhang@hanyang.ac.kr  
+> Visiongo Co., Ltd.   
 > 2020.06.23
 
 ## Sensors
@@ -36,11 +36,18 @@
 * Two or three persons are acting in a sequence (No frames contain more than two persons at the same time.)
 
 
-
 ### Indoor scenes
 
 
-
+### Actions
+* "sit"
+* "stand"
+* "walk"
+* "fall"
+* "lie"
+* "standup"
+* "sitdown"
+* "lying"
 
 
 ### Dataset file format
@@ -49,7 +56,7 @@ The data file name format as following:
 
 ```(date)_(sensor model)_(indoor scene)_(lighting)_(heat source).csv```
 
-E.g., 20200623_mlx90640_is01_natural_none.csv
+E.g., 20200623_mlx90640_01_natural_none.csv
 
 
 
@@ -70,8 +77,6 @@ It's correspond to the sensors in the "Condition" part above, such as "mlx90640"
 #### Heat source
 
 There are five type of heat source.
-
-"none" : no any heat source.
-
-""
+* "none": no any heat source.
+* ""
 

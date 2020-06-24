@@ -13,6 +13,12 @@ from IPython import display
 from subprocess import call
 from matplotlib import pyplot as plt
 
+# 01-15
+indoor_scene = '01'
+# natural, light, dark
+lighting = 'light'
+# none
+heat_source = 'none'
 
 # init the i2c and mlx90640
 i2c = busio.I2C(board.SCL, board.SDA, frequency=1000000)
@@ -22,10 +28,11 @@ mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_16_HZ
 # init csv file
 file_create_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 file_header = ['Time', 'RT'] + ['P{:03d}'.format(i) for i in range(768)]
+csv_file_name = "{}_mlx90640_{}_{}_{}.csv".format(file_create_time, indoor_scene, lighting, heat_source)
 
 # init dataframe header
-df = pd.DataFrame(columns=file_header)
-df.to_csv("{}.csv".format(file_create_time), index=False, header=file_header)
+# df = pd.DataFrame(columns=file_header)
+# df.to_csv(csv_file_name, index=False, header=file_header)
 
 frame = np.zeros(768)
 
@@ -52,19 +59,16 @@ try:
             continue
 
         res = np.around(frame, 2).tolist()
-        _row = [local_time, 0] + res
-        data.append(_row)
+        data.append([local_time, 0] + res)
 
-        fps = 1 / (time.time() - _start)
-        print(fps)
+        print(1 / (time.time() - _start))
 
 except KeyboardInterrupt as e:
     print('KeyboardInterrupt', e)
     df = pd.DataFrame(data, columns=file_header)
-    df.to_csv("{}.csv".format(file_create_time), mode='a', index=False, header=None)
+    df.to_csv(csv_file_name, mode='a', index=False, header=file_header)
     camera.stop_recording()
     camera.close()
-
 
 convert = "MP4Box -add {}.h264 {}.mp4".format(file_create_time, file_create_time) # defining convert
 call ([convert], shell=True) # executing convert using call
