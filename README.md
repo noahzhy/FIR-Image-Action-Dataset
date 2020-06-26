@@ -20,7 +20,7 @@
 | Sensor model             | Melexis *MLX90640-BAA*    | Heimann *HTPA 32x32d L2.1* | Heimann *HTPA 32x32d L2.1* | Raspberry Pi *Camera Module v2* |
 | Resolution of the sensor | 32 × 24 pixels            | 32 × 32 pixels             | 32 × 32 pixels             | 320 × 240 pixels                |
 | Sensor position          | Mid-center of the ceiling | Mid-center of the ceiling  | Corner of the ceiling      | Mid-center of the ceiling       |
-| Sensor height            |                           |                            |                            |                                 |
+| Sensor height            | 2355 mm                 |                            |                            |                                 |
 | Sensor FOV               | 110° × 75°                | 90° × 90°                  | 90° × 90°                  | 62.2° × 48.8°                   |
 | Viewing Direction        | Vertically downward       | Vertically downward        |                            | Vertically downward             |
 | Frame rate               | 8 fps                     |                            |                            | 24fps                           |
