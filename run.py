@@ -15,7 +15,7 @@ from subprocess import call
 from matplotlib import pyplot as plt
 
 # 01-15
-indoor_scene = '01'
+indoor_scene = '02'
 # natural, light, dark
 lighting = 'light'
 # none
