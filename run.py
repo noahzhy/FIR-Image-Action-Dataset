@@ -19,7 +19,7 @@ indoor_scene = '01'
 # natural, light, dark
 lighting = 'light'
 # none
-heat_source = 'test'
+heat_source = 'none'
 
 # init the i2c and mlx90640
 i2c = busio.I2C(board.SCL, board.SDA, frequency=1000000)
