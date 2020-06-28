@@ -76,7 +76,7 @@ try:
         res = np.around(frame, 2).tolist()
         data.append([local_time, 0] + res)
 
-        print('FPS:', round((1 / (time.time() - _start)), 2), 'time:', round(keep_time, 2))
+        print('FPS:', round((1 / (time.time() - _start)), 2), '\ttime:', round(keep_time, 2))
 
 except KeyboardInterrupt as e:
     print('KeyboardInterrupt', e)
