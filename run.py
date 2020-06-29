@@ -37,7 +37,6 @@ def get_temperature(gpio=17):
         return 0
     return round(temperature, 2)
 
-
 # t = get_temperature()
 
 # init csv file
