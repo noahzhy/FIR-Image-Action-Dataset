@@ -72,16 +72,16 @@ class App:
         label_frame.pack(side='top', fill='both', expand=True, padx=10, pady=5)
 
         v = StringVar()
-        Radiobutton(label_frame, text='走路', variable=v, value='walk').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='站着', variable=v, value='stand').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='起身', variable=v, value='standup').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='坐着', variable=v, value='sit').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='坐下', variable=v, value='sitdown').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='摔倒', variable=v, value='falling').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='摔倒后挣扎/不动', variable=v, value='falled').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='躺下', variable=v, value='lying').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='睡觉（活蛆）', variable=v, value='sleeping').pack(padx=5, side='left')
-        Radiobutton(label_frame, text='活动', variable=v, value='active').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='a走路', variable=v, value='walk').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='s站着', variable=v, value='stand').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='d起身', variable=v, value='standup').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='f坐着', variable=v, value='sit').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='g坐下', variable=v, value='sitdown').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='h摔倒', variable=v, value='falling').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='j摔倒后挣扎/不动', variable=v, value='falled').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='k躺下', variable=v, value='lying').pack(padx=5, side='left')
+        Radiobutton(label_frame, text='l睡觉（活蛆）', variable=v, value='sleeping').pack(padx=5, side='left')
+        Radiobutton(label_frame, text=';活动', variable=v, value='active').pack(padx=5, side='left')
         v.set('walk')
 
         label_list = Listbox(self.app, width=100)
@@ -111,6 +111,18 @@ class App:
         self.app.bind('<Left>', self.submit_label)#37
         self.app.bind('<Right>', self.submit_label)#39
         self.app.bind('<Return>', self.submit_label)#13
+
+        self.app.bind('<a>', self.submit_label)#65
+        self.app.bind('<s>', self.submit_label)#83
+        self.app.bind('<d>', self.submit_label)#68
+        self.app.bind('<f>', self.submit_label)#70
+        self.app.bind('<g>', self.submit_label)#71
+
+        self.app.bind('<h>', self.submit_label)#72
+        self.app.bind('<j>', self.submit_label)#74
+        self.app.bind('<k>', self.submit_label)#75
+        self.app.bind('<l>', self.submit_label)#76
+        self.app.bind('<;>', self.submit_label)#186
 
         self.load_label_csv()
         self.app.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -217,7 +229,7 @@ class App:
         # self.start_pause()
 
     def submit_label(self, event=None):
-        # print(event)
+        print(event)
         def update_last_line(keep_length=0, start=0, end=0, action=None):
             keep_string = ','.join(self.label_list.get(END).split(',')[0:keep_length+1])
             self.label_list.delete(END)
@@ -228,6 +240,41 @@ class App:
             else:
                 pre = ',{},{},{},'.format(start, end, action)
             self.label_list.insert(END, keep_string+pre)
+
+        # self.app.bind('<a>', self.submit_label)#65
+        # self.app.bind('<s>', self.submit_label)#83
+        # self.app.bind('<d>', self.submit_label)#68
+        # self.app.bind('<f>', self.submit_label)#70
+        # self.app.bind('<g>', self.submit_label)#71
+        # self.app.bind('<h>', self.submit_label)#72
+        # self.app.bind('<j>', self.submit_label)#74
+        # self.app.bind('<k>', self.submit_label)#75
+        # self.app.bind('<l>', self.submit_label)#76
+        # self.app.bind('<;>', self.submit_label)#186
+
+        if event.keycode == 65:
+            self.current_label.set('walk')
+        if event.keycode == 83:
+            self.current_label.set('stand')
+        if event.keycode == 68:
+            self.current_label.set('standup')
+        if event.keycode == 70:
+            self.current_label.set('sit')
+        if event.keycode == 71:
+            self.current_label.set('sitdown')
+        if event.keycode == 72:
+            self.current_label.set('falling')
+        if event.keycode == 74:
+            self.current_label.set('falled')
+        if event.keycode == 75:
+            self.current_label.set('lying')
+        if event.keycode == 76:
+            self.current_label.set('sleeping')
+        if event.keycode == 186:
+            self.current_label.set('active')
+        
+        self.app.update()
+
         
         if event.keycode == 188:
             self.bar.set(self.bar.get()-1)
