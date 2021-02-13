@@ -1,18 +1,20 @@
-from cv2 import *
+import cv2
 from pandas import read_csv
-from numpy import array, reshape
+from numpy import array, reshape, where, mean
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(740, 293)
+        MainWindow.resize(760, 293)
         MainWindow.setFixedSize(MainWindow.width(), MainWindow.height())
 
         self.path = QtCore.QDir.rootPath()
         self.pos = 0
         self.max_len = 0
+        # 1.047 it's a best split value by many times testing
+        self.divide = 47
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -21,6 +23,15 @@ class Ui_MainWindow(object):
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
+
+        self.verticalSlider = QtWidgets.QSlider(self.centralwidget)
+        self.verticalSlider.setGeometry(QtCore.QRect(340, 10, 22, 240))
+        self.verticalSlider.setOrientation(QtCore.Qt.Vertical)
+        self.verticalSlider.setObjectName("verticalSlider")
+        self.verticalSlider.setMaximum(100)
+        self.verticalSlider.setValue(self.divide)
+        self.verticalSlider.valueChanged.connect(self.divide_value_changed)
+        
         self.horizontalSlider = QtWidgets.QSlider(self.centralwidget)
         self.horizontalSlider.setGeometry(QtCore.QRect(10, 260, 321, 22))
         self.horizontalSlider.setOrientation(QtCore.Qt.Horizontal)
@@ -30,10 +41,11 @@ class Ui_MainWindow(object):
         self.horizontalSlider.sliderReleased.connect(self.slider_released)
         self.horizontalSlider.setDisabled(True)
         self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
-        self.groupBox.setGeometry(QtCore.QRect(350, 10, 381, 241))
+        self.groupBox.setGeometry(QtCore.QRect(370, 10, 381, 241))
         self.groupBox.setObjectName("groupBox")
         self.fileModel = QtWidgets.QFileSystemModel()
-        self.fileModel.setFilter(QtCore.QDir.NoDotAndDotDot | QtCore.QDir.Files)
+        self.fileModel.setFilter(
+            QtCore.QDir.NoDotAndDotDot | QtCore.QDir.Files)
         self.listView = QtWidgets.QListView(self.groupBox)
         self.listView.setGeometry(QtCore.QRect(10, 20, 361, 211))
         self.listView.setModel(self.fileModel)
@@ -41,7 +53,7 @@ class Ui_MainWindow(object):
         self.listView.setRootIndex(self.fileModel.index(self.path))
         self.listView.clicked.connect(self.on_clicked)
         self.buttonBox = QtWidgets.QDialogButtonBox(self.centralwidget)
-        self.buttonBox.setGeometry(QtCore.QRect(570, 260, 156, 23))
+        self.buttonBox.setGeometry(QtCore.QRect(596, 260, 156, 23))
         self.buttonBox.setStandardButtons(
             QtWidgets.QDialogButtonBox.Close | QtWidgets.QDialogButtonBox.Open
         )
@@ -49,10 +61,10 @@ class Ui_MainWindow(object):
         self.buttonBox.accepted.connect(self.select_path)
         self.buttonBox.rejected.connect(self.exit_win)
         self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(350, 262, 41, 16))
+        self.label.setGeometry(QtCore.QRect(370, 262, 41, 16))
         self.label.setObjectName("label")
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit.setGeometry(QtCore.QRect(400, 260, 61, 20))
+        self.lineEdit.setGeometry(QtCore.QRect(420, 260, 61, 20))
         self.lineEdit.setObjectName("lineEdit")
         self.lineEdit.setText("0")
         self.lineEdit.setDisabled(True)
@@ -89,27 +101,54 @@ class Ui_MainWindow(object):
         data = data[frame_pos:frame_pos+1]
         data = array(data).reshape((24, 32))
         frame = self.data_to_frame(data)
-        frame = resize(frame, (320, 240), interpolation=INTER_NEAREST)
         qimage = QtGui.QImage(frame, 320, 240, QtGui.QImage.Format_BGR888)
         self.frame.setPixmap(QtGui.QPixmap(qimage))
 
-    @staticmethod
-    def data_to_frame(data):
+    def divide_value_changed(self):
+        self.divide = self.verticalSlider.value()
+        print("current divide:", self.divide)
+        pos = self.horizontalSlider.value()
+        self.show_frame(self.path, pos)
+
+    def data_to_frame(self, data):
+        def center_point(x, y, w, h):
+            x0 = x + w/2
+            y0 = y + h/2
+            xl = x0 - 8
+            yl = y0 - 8
+            return int(xl)*10, int(yl)*10, 16*10, 16*10
+
+        _mean = mean(data)
+        data_mean = where(data > _mean*(1+0.001*self.divide), data, 0)
+
+        frame = (data_mean).astype('uint8')
+        cnts, hierarchy = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # frame = cv2.applyColorMap(frame, cv2.COLORMAP_JET)  # COLORMAP_JET
+
         out_data = None
-        out_data = normalize(data, out_data, 0, 255, NORM_MINMAX)
-        img_gray = (out_data).astype('uint8')
-        heatmap_g = img_gray.astype('uint8')
-        frame = applyColorMap(heatmap_g, COLORMAP_JET) # COLORMAP_JET
-        return frame
+        out_data = cv2.normalize(data, out_data, 0, 255, cv2.NORM_MINMAX)
+        color_frame = (out_data).astype('uint8')
+        color_frame = cv2.applyColorMap(color_frame, cv2.COLORMAP_JET)  # COLORMAP_JET
+        color_frame = cv2.resize(color_frame, (320, 240), interpolation=cv2.INTER_NEAREST)
+
+        cnt = max(cnts, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(cnt)
+        print(cv2.contourArea(cnt))
+        if cv2.contourArea(cnt) >= 3:
+            x, y, w, h = center_point(x, y, w, h)
+            cv2.rectangle(color_frame, (x, y), (x + w, y + h), (0, 0, 255), 3)
+
+        return color_frame
 
     def value_changed(self):
         pos = self.horizontalSlider.value()
         self.lineEdit.setText(str(pos))
+        self.show_frame(self.path, pos)
 
     def slider_released(self):
         pos = self.horizontalSlider.value()
-        self.lineEdit.setText(str(pos))
-        self.show_frame(self.path, pos)
+        # self.lineEdit.setText(str(pos))
+        # self.show_frame(self.path, pos)
 
     def choose_frame(self):
         pos = int(self.lineEdit.text())
