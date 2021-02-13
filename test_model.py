@@ -1,21 +1,29 @@
-from keras.layers import *
+from keras.optimizers import *
+from keras.metrics import *
 from keras.models import *
+from keras.layers import *
+from keras.losses import *
 
 
-model_cnlst = Sequential()
-model_cnlst.add(TimeDistributed(Conv2D(64, (3, 3), strides=(1,1), activation='relu'), input_shape=(8, 32, 24, 1)))
-model_cnlst.add(TimeDistributed(Conv2D(64, (3, 3), strides=(1,1), activation='relu')))
-model_cnlst.add(TimeDistributed(MaxPooling2D(2,2)))
-model_cnlst.add(TimeDistributed(Conv2D(128, (3, 3), strides=(1,1), activation='relu')))
-model_cnlst.add(TimeDistributed(Conv2D(128, (3, 3), strides=(1,1), activation='relu')))
-model_cnlst.add(TimeDistributed(MaxPooling2D(2,2)))
-model_cnlst.add(TimeDistributed(BatchNormalization()))
-model_cnlst.add(TimeDistributed(Flatten()))
-model_cnlst.add(Dropout(0.2))
+model = Sequential()
+model.add(Conv3D(32, kernel_size=(3, 3, 3), input_shape=(32, 24, 8, 1), padding='same'))
+model.add(Conv3D(32, kernel_size=(3, 3, 3), padding='same'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling3D(pool_size=(3, 3, 3), padding='same'))
+model.add(Dropout(0.25))
 
-model_cnlst.add(LSTM(32, return_sequences=False, dropout=0.2)) # used 32 units
+model.add(Conv3D(64, kernel_size=(3, 3, 3), padding='same'))
+model.add(Conv3D(64, kernel_size=(3, 3, 3), padding='same'))
+model.add(BatchNormalization())
+model.add(Activation('relu'))
+model.add(MaxPooling3D(pool_size=(3, 3, 3), padding='same'))
+model.add(Dropout(0.25))
 
-model_cnlst.add(Dense(32, activation='relu'))
-model_cnlst.add(Dropout(0.2))
-model_cnlst.add(Dense(1, activation='sigmoid'))
-model_cnlst.summary()
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(8, activation='softmax'))
+
+model.compile(loss=CategoricalCrossentropy(), optimizer=Adam(), metrics=['accuracy'])
+model.summary()
