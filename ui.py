@@ -1,7 +1,9 @@
 import cv2
 from pandas import read_csv
-from numpy import array, reshape, where, mean
+from numpy import array, reshape, where, mean, argmax, argsort
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+from numpy import max as np_max
 
 
 class Ui_MainWindow(object):
@@ -13,8 +15,8 @@ class Ui_MainWindow(object):
         self.path = QtCore.QDir.rootPath()
         self.pos = 0
         self.max_len = 0
-        # 1.047 it's a best split value by many times testing
-        self.divide = 47
+        # 1.041 it's a best split value by many times testing
+        self.divide = 41
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -30,6 +32,7 @@ class Ui_MainWindow(object):
         self.verticalSlider.setObjectName("verticalSlider")
         self.verticalSlider.setMaximum(100)
         self.verticalSlider.setValue(self.divide)
+        self.verticalSlider.setDisabled(True)
         self.verticalSlider.valueChanged.connect(self.divide_value_changed)
         
         self.horizontalSlider = QtWidgets.QSlider(self.centralwidget)
@@ -93,13 +96,13 @@ class Ui_MainWindow(object):
         self.horizontalSlider.setValue(0)
         self.horizontalSlider.setMaximum(self.max_len)
         self.horizontalSlider.setDisabled(False)
+        self.verticalSlider.setDisabled(False)
         self.lineEdit.setDisabled(False)
 
     def show_frame(self, file_path, frame_pos):
         data = read_csv(file_path, index_col=None).iloc[:, 2:]
         self.max_len = len(data)-1
         data = data[frame_pos:frame_pos+1]
-        data = array(data).reshape((24, 32))
         frame = self.data_to_frame(data)
         qimage = QtGui.QImage(frame, 320, 240, QtGui.QImage.Format_BGR888)
         self.frame.setPixmap(QtGui.QPixmap(qimage))
@@ -110,6 +113,12 @@ class Ui_MainWindow(object):
         pos = self.horizontalSlider.value()
         self.show_frame(self.path, pos)
 
+    @staticmethod
+    def in_it(x0, y0, x, y, w, h) -> bool:
+        if (x0>x and x0<x+w) and (y0>y and y0<y+h):
+            return True
+        return False
+
     def data_to_frame(self, data):
         def center_point(x, y, w, h):
             x0 = x + w/2
@@ -118,27 +127,33 @@ class Ui_MainWindow(object):
             yl = y0 - 8
             return int(xl)*10, int(yl)*10, 16*10, 16*10
 
+        # out_data = None
+        data = array(data).reshape((24, 32))
+
         _mean = mean(data)
         data_mean = where(data > _mean*(1+0.001*self.divide), data, 0)
 
-        frame = (data_mean).astype('uint8')
-        cnts, hierarchy = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # frame = cv2.applyColorMap(frame, cv2.COLORMAP_JET)  # COLORMAP_JET
-
         out_data = None
+        out_data = cv2.normalize(data_mean, out_data, 0, 255, cv2.NORM_MINMAX)
+        frame = (out_data).astype('uint8')
+        frame = cv2.blur(frame, (2,2))
+
+        cnts, hierarchy = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        ### raw mode
         out_data = cv2.normalize(data, out_data, 0, 255, cv2.NORM_MINMAX)
-        color_frame = (out_data).astype('uint8')
-        color_frame = cv2.applyColorMap(color_frame, cv2.COLORMAP_JET)  # COLORMAP_JET
-        color_frame = cv2.resize(color_frame, (320, 240), interpolation=cv2.INTER_NEAREST)
+        frame = (out_data).astype('uint8')
+        frame = cv2.applyColorMap(frame, cv2.COLORMAP_JET)  # COLORMAP_JET
+        frame = cv2.resize(frame, (320, 240), interpolation=cv2.INTER_NEAREST)
 
-        cnt = max(cnts, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(cnt)
-        print(cv2.contourArea(cnt))
-        if cv2.contourArea(cnt) >= 3:
-            x, y, w, h = center_point(x, y, w, h)
-            cv2.rectangle(color_frame, (x, y), (x + w, y + h), (0, 0, 255), 3)
+        if cnts:
+            cnt = max(cnts, key=cv2.contourArea)
+            x, y, w, h = cv2.boundingRect(cnt)
+            print(cv2.contourArea(cnt))
+            if cv2.contourArea(cnt) >= 4:
+                x, y, w, h = center_point(x, y, w, h)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 3)
 
-        return color_frame
+        return frame
 
     def value_changed(self):
         pos = self.horizontalSlider.value()
