@@ -8,11 +8,14 @@ import cv2
 
 file_path = "data/20200626_154313_mlx90640_01_light_none.csv"
 frame_pos = 305
-frame_pos = 560
-frame_pos = 0
+# frame_pos = 560
+# frame_pos = 0
 
-file_path = "data/20200626_160219_mlx90640_01_light_none.csv"
-frame_pos = 920
+# file_path = "data/20200626_160219_mlx90640_01_light_none.csv"
+# frame_pos = 920
+
+file_path = "data/20200629_155230_mlx90640_02_light_none.csv"
+frame_pos = 1034
 
 
 def data_to_frame(data):
@@ -58,7 +61,7 @@ def center_point(x, y, w, h):
 data = read_csv(file_path, index_col=False).iloc[:, 2:]
 data = data[frame_pos:frame_pos+1].values
 _mean = mean(data)
-# data = where(data > _mean*1.041, data, 0)
+data = where(data > _mean*1.050, data, 0)
 
 data = array(data).reshape((24, 32))
 frame = data_to_frame(data)
