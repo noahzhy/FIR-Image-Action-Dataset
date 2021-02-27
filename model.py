@@ -8,20 +8,44 @@ from keras.layers import *
 from keras.losses import *
 
 
+def model_dwcnn2d(frame_num:int=8):
+    model = Sequential()
+    model.add(DepthwiseConv2D(kernel_size=3, input_shape=(frame_num, 32, 24), padding='same', data_format='channels_first'))
+    model.add(DepthwiseConv2D(kernel_size=3, padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(DepthwiseConv2D(kernel_size=3, padding='same'))
+    model.add(DepthwiseConv2D(kernel_size=3, padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(10, activation='softmax'))
+    model.summary()
+    return model
+
+
 def model_3dcnn(frame_num:int=8):
     model = Sequential()
     model.add(Conv3D(32, kernel_size=(3, 3, 3), input_shape=(32, 24, frame_num, 1), padding='same'))
     model.add(Conv3D(32, kernel_size=(3, 3, 3), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
-    model.add(MaxPooling3D(pool_size=(2, 2, 2), padding='same'))
+    model.add(MaxPool3D(pool_size=(2, 2, 2), padding='same'))
     model.add(Dropout(0.25))
 
     model.add(Conv3D(64, kernel_size=(3, 3, 3), padding='same'))
     model.add(Conv3D(64, kernel_size=(3, 3, 3), padding='same'))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
-    model.add(MaxPooling3D(pool_size=(2, 2, 2), padding='same'))
+    model.add(MaxPool3D(pool_size=(2, 2, 2), padding='same'))
     model.add(Dropout(0.25))
 
     model.add(Flatten())
@@ -94,8 +118,9 @@ def show_train_result(history):
 
 
 if __name__ == "__main__":
-    model = model_cnn_lstm()
-    model = model_3dcnn()
+    # model = model_cnn_lstm()
+    # model = model_3dcnn()
+    model = model_dwcnn2d()
     # history = train(model=model)
     # show_train_result(history)
 
