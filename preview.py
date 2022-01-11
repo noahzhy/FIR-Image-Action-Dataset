@@ -149,7 +149,7 @@ class App:
         self.left_view.config(image=img_left)
         self.left_view.image = img_left
 
-        img_right = self.get_video_frame(frame_num)
+        img_right = self.get_video_frame(self.bar.get() + 4)
         self.right_view.config(image=img_right)
         self.right_view.image = img_right
         

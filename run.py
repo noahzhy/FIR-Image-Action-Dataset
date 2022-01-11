@@ -7,6 +7,7 @@ import time, datetime
 import board, busio
 import numpy as np
 import pandas as pd
+import cv2
 import adafruit_mlx90640
 import Adafruit_DHT
 
@@ -15,7 +16,7 @@ from subprocess import call
 from matplotlib import pyplot as plt
 
 # 01-15
-indoor_scene = '02'
+indoor_scene = '03'
 # natural, light, dark
 lighting = 'light'
 # none
@@ -50,12 +51,11 @@ csv_file_name = "{}.csv".format(base_file_name)
 
 frame = np.zeros(768)
 
-camera = picamera.PiCamera()
-camera.resolution = (320, 240)
-camera.framerate = 24
-camera.vflip = True
-
-camera.start_recording('{}.h264'.format(base_file_name))
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter("{}.mp4".format(base_file_name), fourcc, 8, (320, 240))
+camera = cv2.VideoCapture(0)
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
 zero = time.time()
 data = list()
@@ -63,7 +63,7 @@ data = list()
 try:
     while True:
         keep_time = time.time() - zero
-
+        
         try:
             local_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-2]
             _start = time.time()
@@ -71,18 +71,17 @@ try:
         except ValueError as e:
             print('ValueError', e)
             continue
-
+        _, c_frame = camera.read()
+        c_frame = cv2.flip(c_frame, 0)
+        out.write(c_frame)
         res = np.around(frame, 2).tolist()
         data.append([local_time, 0] + res)
-
         print('FPS:', round((1 / (time.time() - _start)), 2), '\ttime:', round(keep_time, 2))
 
 except KeyboardInterrupt as e:
     print('KeyboardInterrupt', e)
     df = pd.DataFrame(data, columns=file_header)
     df.to_csv(csv_file_name, mode='a', index=False, header=file_header)
-    camera.stop_recording()
-    camera.close()
+    camera.release()
+    out.release()
 
-convert = "MP4Box -add {}.h264 {}.mp4".format(base_file_name, base_file_name)
-call([convert], shell=True)
