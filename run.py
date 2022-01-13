@@ -30,6 +30,16 @@ sensor = Adafruit_DHT.DHT22
 gpio = 17
 _start = time.time()
 
+frame = np.zeros(768)
+
+zero = time.time()
+data = list()
+
+start_rec = False
+
+camera = cv2.VideoCapture(0)
+camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
 def get_temperature(gpio=17):
     try:
@@ -38,27 +48,15 @@ def get_temperature(gpio=17):
         return 0
     return round(temperature, 2)
 
-# t = get_temperature()
-
-# init csv file
-file_create_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-file_header = ['Time', 'RT'] + ['P{:03d}'.format(i) for i in range(768)]
-base_file_name = "{}_mlx90640_{}_{}_{}".format(file_create_time, indoor_scene, lighting, heat_source)
-csv_file_name = "{}.csv".format(base_file_name)
-# init dataframe header
-# df = pd.DataFrame(columns=file_header)
-# df.to_csv(csv_file_name, index=False, header=file_header)
-
-frame = np.zeros(768)
-
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter("{}.mp4".format(base_file_name), fourcc, 8, (320, 240))
-camera = cv2.VideoCapture(0)
-camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
-
-zero = time.time()
-data = list()
+def data_to_frame(data):
+    data = np.array(data).reshape((24,32))
+    out_data = None
+    out_data = cv2.normalize(data, out_data, 0, 255, cv2.NORM_MINMAX)
+    img_gray = (out_data).astype('uint8')
+    heatmap_g = img_gray.astype('uint8')
+    frame = cv2.applyColorMap(heatmap_g, cv2.COLORMAP_JET)
+    frame = cv2.resize(frame, (320, 240), interpolation = cv2.INTER_AREA)
+    return frame
 
 try:
     while True:
@@ -73,15 +71,33 @@ try:
             continue
         _, c_frame = camera.read()
         c_frame = cv2.flip(c_frame, 0)
-        out.write(c_frame)
-        res = np.around(frame, 2).tolist()
-        data.append([local_time, 0] + res)
-        print('FPS:', round((1 / (time.time() - _start)), 2), '\ttime:', round(keep_time, 2))
+        if start_rec == True:
+            out.write(c_frame)
+            res = np.around(frame, 2).tolist()
+            data.append([local_time, 0] + res)
+        cv2.imshow("mlx", data_to_frame(frame))
+        cv2.imshow("camera", c_frame)
+        key = cv2.waitKey(1)
+        if key != -1:
+            print(key)
+        if key & 0xFF == ord('s') and start_rec == False:
+            # init csv file
+            file_create_time = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            file_header = ['Time', 'RT'] + ['P{:03d}'.format(i) for i in range(768)]
+            base_file_name = "{}_mlx90640_{}_{}_{}".format(file_create_time, indoor_scene, lighting, heat_source)
+            csv_file_name = "{}.csv".format(base_file_name)
+            
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter("{}.mp4".format(base_file_name), fourcc, 8, (320, 240))
+            
+            start_rec = True
+        elif key & 0xFF == ord('e') and start_rec == True:
+            df = pd.DataFrame(data, columns=file_header)
+            df.to_csv(csv_file_name, mode='a', index=False, header=file_header)
+            out.release()
+            data = list()
+            start_rec = False
 
 except KeyboardInterrupt as e:
     print('KeyboardInterrupt', e)
-    df = pd.DataFrame(data, columns=file_header)
-    df.to_csv(csv_file_name, mode='a', index=False, header=file_header)
-    camera.release()
-    out.release()
 
