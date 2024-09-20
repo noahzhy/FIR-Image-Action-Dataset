@@ -67,4 +67,15 @@ It's correspond to the sensors in the "Condition" part above, such as "mlx90640"
 There are five type of heat source.
 
 * "none": no any heat source.
-* ""
+
+## Citations
+```
+@misc{zhang2020fir,
+  title={FIR-Image-Action-Dataset},
+  author={Zhang, H},
+  year={2020},
+  publisher={Rep{\'e}r{\'e} {\`a} https://github. com/visiongo-kr/FIR-Image-Action-Dataset\# fir-image~…}
+}
+```
+
+
