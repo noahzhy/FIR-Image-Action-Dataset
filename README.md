@@ -1,10 +1,5 @@
 # FIR Image Action Dataset
 
-> Haoyu Zhang  
-> noahzhang@hanyang.ac.kr  
-> Visiongo Co., Ltd.
-> 2020.06.23
-
 ## Sensors
 
 * Melexis *MLX90640-BAA* (short for mlx90640)
@@ -77,5 +72,6 @@ There are five type of heat source.
   publisher={Rep{\'e}r{\'e} {\`a} https://github. com/visiongo-kr/FIR-Image-Action-Dataset\# fir-image~…}
 }
 ```
+
 
 
